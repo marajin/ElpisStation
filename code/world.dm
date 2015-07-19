@@ -392,11 +392,70 @@ var/failed_db_connections = 0
 var/failed_old_db_connections = 0
 
 /hook/startup/proc/connectDB()
-	if(!setup_database_connection())
-		world.log << "Your server failed to establish a connection with the feedback database."
+	if(config.sqlite_enabled)
+		if(!setup_sqlite())
+			world.log << "SQLite connection failed."
+		else
+			world.log << "Connected to SQLite."
+		return 1
 	else
-		world.log << "Feedback database connection established."
-	return 1
+		if(!setup_database_connection())
+			world.log << "Your server failed to establish a connection with the feedback database."
+		else
+			world.log << "Feedback database connection established."
+		return 1
+
+proc/setup_sqlite()
+	world.log << "Setting up SQLite..."
+
+	var/sqlitedb = "SQL/elpis.db"
+
+	world.log << "SQLite DB: [sqlitedb]"
+
+	dbconlite.Open(sqlitedb)
+
+	world.log << "Trying to test the SQLite db..."
+
+	var/database/query/q = new("SELECT * FROM erro_admin;")
+
+	if(!q.Execute(dbconlite)) return
+
+	while(q.NextRow())
+		var/row = q.GetRowData()   // proc name chosen to line up with Dantom.DB
+		world.log << "[row["ckey"]] is \a [row["rank"]]."
+
+	if (dbconlite)
+		return 1
+	else
+		return 0
+
+	return .
+
+proc/setup_old_sqlite()
+	world.log << "Setting up Old DB in SQLite..."
+
+	var/sqlitedb = "SQL/elpis2.db"
+
+	world.log << "Old SQLite DB: [sqlitedb]"
+
+	dbcon_oldlite.Open(sqlitedb)
+
+	world.log << "Trying to test the Old SQLite db..."
+
+	var/database/query/q = new("SELECT * FROM library;")
+
+	if(!q.Execute(dbcon_oldlite)) return
+
+	while(q.NextRow())
+		var/row = q.GetRowData()   // proc name chosen to line up with Dantom.DB
+		world.log << "[row["title"]] is by \a [row["author"]]."
+
+	if (dbcon_oldlite)
+		return 1
+	else
+		return 0
+
+	return .
 
 proc/setup_database_connection()
 
@@ -434,11 +493,18 @@ proc/establish_db_connection()
 
 
 /hook/startup/proc/connectOldDB()
-	if(!setup_old_database_connection())
-		world.log << "Your server failed to establish a connection with the SQL database."
+	if(config.sqlite_enabled)
+		if(!setup_old_sqlite())
+			world.log << "Old DB SQLite connection failed."
+		else
+			world.log << "Connected to Old DB SQLite."
+		return 1
 	else
-		world.log << "SQL database connection established."
-	return 1
+		if(!setup_old_database_connection())
+			world.log << "Your server failed to establish a connection with the SQL database."
+		else
+			world.log << "SQL database connection established."
+		return 1
 
 //These two procs are for the old database, while it's being phased out. See the tgstation.sql file in the SQL folder for more information.
 proc/setup_old_database_connection()

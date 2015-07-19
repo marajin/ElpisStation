@@ -210,6 +210,8 @@ var/custom_event_msg = null
 
 // Database connections. A connection is established on world creation.
 // Ideally, the connection dies when the server restarts (After feedback logging.).
+var/database/dbconlite     = new() // Feedback    database (New database)
+var/database/dbcon_oldlite = new() // /tg/station database (Old database) -- see the files in the SQL folder for information on what goes where.
 var/DBConnection/dbcon     = new() // Feedback    database (New database)
 var/DBConnection/dbcon_old = new() // /tg/station database (Old database) -- see the files in the SQL folder for information on what goes where.
 
@@ -257,3 +259,7 @@ var/max_explosion_range = 14
 
 // Announcer intercom, because too much stuff creates an intercom for one message then hard del()s it.
 var/global/obj/item/device/radio/intercom/global_announcer = new(null)
+
+proc/database/sanitizeSQLite(str)
+#warn Plox not to be forgetting to make this do something -- Marajin 20th July 2015
+   return str

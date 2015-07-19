@@ -43,26 +43,44 @@ datum/borrowbook // Datum used to keep track of who has borrowed what when and f
 			<A href='?src=\ref[src];setauthor=1'>Filter by Author: [author]</A><BR>
 			<A href='?src=\ref[src];search=1'>\[Start Search\]</A><BR>"}
 		if(1)
-			establish_old_db_connection()
-			if(!dbcon_old.IsConnected())
-				dat += "<font color=red><b>ERROR</b>: Unable to contact External Archive. Please contact your system administrator for assistance.</font><BR>"
-			else if(!SQLquery)
-				dat += "<font color=red><b>ERROR</b>: Malformed search request. Please contact your system administrator for assistance.</font><BR>"
+			if(!config.sqlite_enabled)
+				establish_old_db_connection()
+				if(!dbcon_old.IsConnected())
+					dat += "<font color=red><b>ERROR</b>: Unable to contact External Archive. Please contact your system administrator for assistance.</font><BR>"
+				else if(!SQLquery)
+					dat += "<font color=red><b>ERROR</b>: Malformed search request. Please contact your system administrator for assistance.</font><BR>"
+				else
+					dat += {"<table>
+					<tr><td>AUTHOR</td><td>TITLE</td><td>CATEGORY</td><td>SS<sup>13</sup>BN</td></tr>"}
+
+					var/DBQuery/query = dbcon_old.NewQuery(SQLquery)
+					query.Execute()
+
+					while(query.NextRow())
+						var/author = query.item[1]
+						var/title = query.item[2]
+						var/category = query.item[3]
+						var/id = query.item[4]
+						dat += "<tr><td>[author]</td><td>[title]</td><td>[category]</td><td>[id]</td></tr>"
+					dat += "</table><BR>"
+					dat += "<A href='?src=\ref[src];back=1'>\[Go Back\]</A><BR>"
 			else
-				dat += {"<table>
-				<tr><td>AUTHOR</td><td>TITLE</td><td>CATEGORY</td><td>SS<sup>13</sup>BN</td></tr>"}
+				if(!dbcon_oldlite)
+					dat += "<font color=red><b>ERROR</b>: Unable to contact External Archive. Please contact your system administrator for assistance.</font><BR>"
+				else if(!SQLquery)
+					dat += "<font color=red><b>ERROR</b>: Malformed search request. Please contact your system administrator for assistance.</font><BR>"
+				else
+					dat += {"<table>
+					<tr><td>AUTHOR</td><td>TITLE</td><td>CATEGORY</td><td>SS<sup>13</sup>BN</td></tr>"}
 
-				var/DBQuery/query = dbcon_old.NewQuery(SQLquery)
-				query.Execute()
+					var/database/query/q = new(SQLquery)
+					q.Execute(dbcon_oldlite)
 
-				while(query.NextRow())
-					var/author = query.item[1]
-					var/title = query.item[2]
-					var/category = query.item[3]
-					var/id = query.item[4]
-					dat += "<tr><td>[author]</td><td>[title]</td><td>[category]</td><td>[id]</td></tr>"
-				dat += "</table><BR>"
-			dat += "<A href='?src=\ref[src];back=1'>\[Go Back\]</A><BR>"
+					while(q.NextRow())
+						var/row = q.GetRowData()
+						dat += "<tr><td>[row["author"]]</td><td>[row["title"]]</td><td>[row["category"]]</td><td>[row["id"]]</td></tr>"
+					dat += "</table><BR>"
+					dat += "<A href='?src=\ref[src];back=1'>\[Go Back\]</A><BR>"
 	user << browse(dat, "window=publiclibrary")
 	onclose(user, "publiclibrary")
 
@@ -189,24 +207,41 @@ datum/borrowbook // Datum used to keep track of who has borrowed what when and f
 			<A href='?src=\ref[src];switchscreen=0'>(Return to main menu)</A><BR>"}
 		if(4)
 			dat += "<h3>External Archive</h3>"
-			establish_old_db_connection()
-			if(!dbcon_old.IsConnected())
-				dat += "<font color=red><b>ERROR</b>: Unable to contact External Archive. Please contact your system administrator for assistance.</font>"
+			if(!config.sqlite_enabled)
+				establish_old_db_connection()
+				if(!dbcon_old.IsConnected())
+					dat += "<font color=red><b>ERROR</b>: Unable to contact External Archive. Please contact your system administrator for assistance.</font>"
+				else
+					dat += {"<A href='?src=\ref[src];orderbyid=1'>(Order book by SS<sup>13</sup>BN)</A><BR><BR>
+					<table>
+					<tr><td>AUTHOR</td><td>TITLE</td><td>CATEGORY</td><td></td></tr>"}
+
+					var/DBQuery/query = dbcon_old.NewQuery("SELECT id, author, title, category FROM library")
+					query.Execute()
+
+					while(query.NextRow())
+						var/id = query.item[1]
+						var/author = query.item[2]
+						var/title = query.item[3]
+						var/category = query.item[4]
+						dat += "<tr><td>[author]</td><td>[title]</td><td>[category]</td><td><A href='?src=\ref[src];targetid=[id]'>\[Order\]</A></td></tr>"
+					dat += "</table>"
+				dat += "<BR><A href='?src=\ref[src];switchscreen=0'>(Return to main menu)</A><BR>"
 			else
-				dat += {"<A href='?src=\ref[src];orderbyid=1'>(Order book by SS<sup>13</sup>BN)</A><BR><BR>
-				<table>
-				<tr><td>AUTHOR</td><td>TITLE</td><td>CATEGORY</td><td></td></tr>"}
+				if(!dbcon_oldlite)
+					dat += "<font color=red><b>ERROR</b>: Unable to contact External Archive. Please contact your system administrator for assistance.</font><BR>"
+				else
+					dat += {"<A href='?src=\ref[src];orderbyid=1'>(Order book by SS<sup>13</sup>BN)</A><BR><BR>
+					<table>
+					<tr><td>AUTHOR</td><td>TITLE</td><td>CATEGORY</td><td></td></tr>"}
 
-				var/DBQuery/query = dbcon_old.NewQuery("SELECT id, author, title, category FROM library")
-				query.Execute()
+					var/database/query/q = new("SELECT id, author, title, category FROM library")
+					q.Execute(dbcon_oldlite)
 
-				while(query.NextRow())
-					var/id = query.item[1]
-					var/author = query.item[2]
-					var/title = query.item[3]
-					var/category = query.item[4]
-					dat += "<tr><td>[author]</td><td>[title]</td><td>[category]</td><td><A href='?src=\ref[src];targetid=[id]'>\[Order\]</A></td></tr>"
-				dat += "</table>"
+					while(q.NextRow())
+						var/row = q.GetRowData()
+						dat += "<tr><td>[row["author"]]</td><td>[row["title"]]</td><td>[row["category"]]</td><td><A href='?src=\ref[src];targetid=[row["id"]]'>\[Order\]</A></td></tr>"
+					dat += "</table>"
 			dat += "<BR><A href='?src=\ref[src];switchscreen=0'>(Return to main menu)</A><BR>"
 		if(5)
 			dat += "<H3>Upload a New Title</H3>"
@@ -332,54 +367,96 @@ datum/borrowbook // Datum used to keep track of who has borrowed what when and f
 					if(scanner.cache.unique)
 						alert("This book has been rejected from the database. Aborting!")
 					else
-						establish_old_db_connection()
-						if(!dbcon_old.IsConnected())
-							alert("Connection to Archive has been severed. Aborting.")
-						else
-							/*
-							var/sqltitle = dbcon.Quote(scanner.cache.name)
-							var/sqlauthor = dbcon.Quote(scanner.cache.author)
-							var/sqlcontent = dbcon.Quote(scanner.cache.dat)
-							var/sqlcategory = dbcon.Quote(upload_category)
-							*/
-							var/sqltitle = sanitizeSQL(scanner.cache.name)
-							var/sqlauthor = sanitizeSQL(scanner.cache.author)
-							var/sqlcontent = sanitizeSQL(scanner.cache.dat)
-							var/sqlcategory = sanitizeSQL(upload_category)
-							var/DBQuery/query = dbcon_old.NewQuery("INSERT INTO library (author, title, content, category) VALUES ('[sqlauthor]', '[sqltitle]', '[sqlcontent]', '[sqlcategory]')")
-							if(!query.Execute())
-								usr << query.ErrorMsg()
+						if(!config.sqlite_enabled)
+							establish_old_db_connection()
+							if(!dbcon_old.IsConnected())
+								alert("Connection to Archive has been severed. Aborting.")
 							else
-								log_game("[usr.name]/[usr.key] has uploaded the book titled [scanner.cache.name], [length(scanner.cache.dat)] signs")
-								alert("Upload Complete.")
+								/*
+								var/sqltitle = dbcon.Quote(scanner.cache.name)
+								var/sqlauthor = dbcon.Quote(scanner.cache.author)
+								var/sqlcontent = dbcon.Quote(scanner.cache.dat)
+								var/sqlcategory = dbcon.Quote(upload_category)
+								*/
+								var/sqltitle = sanitizeSQL(scanner.cache.name)
+								var/sqlauthor = sanitizeSQL(scanner.cache.author)
+								var/sqlcontent = sanitizeSQL(scanner.cache.dat)
+								var/sqlcategory = sanitizeSQL(upload_category)
+								var/DBQuery/query = dbcon_old.NewQuery("INSERT INTO library (author, title, content, category) VALUES ('[sqlauthor]', '[sqltitle]', '[sqlcontent]', '[sqlcategory]')")
+								if(!query.Execute())
+									usr << query.ErrorMsg()
+								else
+									log_game("[usr.name]/[usr.key] has uploaded the book titled [scanner.cache.name], [length(scanner.cache.dat)] signs")
+									alert("Upload Complete.")
+						else
+							if(!dbcon_oldlite)
+								alert("Connection to Archive has been severed. Aborting.")
+							else
+								var/sqltitle = sanitizeSQLite(scanner.cache.name)
+								var/sqlauthor = sanitizeSQLite(scanner.cache.author)
+								var/sqlcontent = sanitizeSQLite(scanner.cache.dat)
+								var/sqlcategory = sanitizeSQLite(upload_category)
+								var/database/query/q = new("INSERT INTO library (author, title, content, category) VALUES ('[sqlauthor]', '[sqltitle]', '[sqlcontent]', '[sqlcategory]')")
+								if(!q.Execute(dbcon_oldlite))
+									usr << "Error writing to SQLite Database."
+								else
+									log_game("[usr.name]/[usr.key] has uploaded the book titled [scanner.cache.name], [length(scanner.cache.dat)] signs")
+									alert("Upload Complete.")
 
 	if(href_list["targetid"])
-		var/sqlid = sanitizeSQL(href_list["targetid"])
-		establish_old_db_connection()
-		if(!dbcon_old.IsConnected())
-			alert("Connection to Archive has been severed. Aborting.")
-		if(bibledelay)
-			for (var/mob/V in hearers(src))
-				V.show_message("<b>[src]</b>'s monitor flashes, \"Printer unavailable. Please allow a short time before attempting to print.\"")
-		else
-			bibledelay = 1
-			spawn(60)
-				bibledelay = 0
-			var/DBQuery/query = dbcon_old.NewQuery("SELECT * FROM library WHERE id=[sqlid]")
-			query.Execute()
+		if(!config.sqlite_enabled)
+			var/sqlid = sanitizeSQL(href_list["targetid"])
+			establish_old_db_connection()
+			if(!dbcon_old.IsConnected())
+				alert("Connection to Archive has been severed. Aborting.")
+			if(bibledelay)
+				for (var/mob/V in hearers(src))
+					V.show_message("<b>[src]</b>'s monitor flashes, \"Printer unavailable. Please allow a short time before attempting to print.\"")
+			else
+				bibledelay = 1
+				spawn(60)
+					bibledelay = 0
+				var/DBQuery/query = dbcon_old.NewQuery("SELECT * FROM library WHERE id=[sqlid]")
+				query.Execute()
 
-			while(query.NextRow())
-				var/author = query.item[2]
-				var/title = query.item[3]
-				var/content = query.item[4]
-				var/obj/item/weapon/book/B = new(src.loc)
-				B.name = "Book: [title]"
-				B.title = title
-				B.author = author
-				B.dat = content
-				B.icon_state = "book[rand(1,7)]"
-				src.visible_message("[src]'s printer hums as it produces a completely bound book. How did it do that?")
-				break
+				while(query.NextRow())
+					var/author = query.item[2]
+					var/title = query.item[3]
+					var/content = query.item[4]
+					var/obj/item/weapon/book/B = new(src.loc)
+					B.name = "Book: [title]"
+					B.title = title
+					B.author = author
+					B.dat = content
+					B.icon_state = "book[rand(1,7)]"
+					src.visible_message("[src]'s printer hums as it produces a completely bound book. How did it do that?")
+					break
+		else
+			var/sqlid = sanitizeSQLite(href_list["targetid"])
+			if(!dbcon_oldlite)
+				alert("Connection to Archive has been severed. Aborting.")
+			else
+				if(bibledelay)
+					for (var/mob/V in hearers(src))
+						V.show_message("<b>[src]</b>'s monitor flashes, \"Printer unavailable. Please allow a short time before attempting to print.\"")
+				else
+					bibledelay = 1
+					spawn(60)
+						bibledelay = 0
+					var/database/query/q = new("SELECT * FROM library WHERE id=[sqlid]")
+					if(!q.Execute(dbcon_oldlite))
+						alert("Printing failed.")
+
+					while(q.NextRow())
+						var row = q.GetRowData()
+						var/obj/item/weapon/book/B = new(src.loc)
+						B.name = "Book: [row["title"]]"
+						B.title = row["title"]
+						B.author = row["author"]
+						B.dat = row["content"]
+						B.icon_state = "book[rand(1,7)]"
+						src.visible_message("[src]'s printer hums as it produces a completely bound book. How did it do that?")
+						break
 	if(href_list["orderbyid"])
 		var/orderid = input("Enter your order:") as num|null
 		if(orderid)
