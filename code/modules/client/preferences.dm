@@ -102,7 +102,7 @@ datum/preferences
 	var/job_engsec_low = 0
 
 	//Keeps track of preferrence for not getting any wanted jobs
-	var/alternate_option = 0
+	var/alternate_option = 1
 
 	var/used_skillpoints = 0
 	var/skill_specialization = null
@@ -140,6 +140,8 @@ datum/preferences
 					return
 	gender = pick(MALE, FEMALE)
 	real_name = random_name(gender,species)
+	randomize_appearance_for()
+	age = rand(25,35)
 
 	gear = list()
 
