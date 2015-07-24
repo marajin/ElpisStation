@@ -5,5 +5,7 @@ DIR: code code\controllers code\defines code\defines\procs code\modules code\mod
 AUTO_FILE_DIR: OFF
 MAP_ICON_TYPE: 0
 LAST_COMPILE_VERSION: 507.1286
+WINDOW: code\world.dm;stddef.dm;code\defines\procs\statistics.dm;code\modules\library\lib_items.dm;code\modules\library\lib_machines.dm;code\defines\procs\dbcore.dm;code\global.dm
+FILE: code\modules\library\lib_machines.dm
 */
 // END_INTERNALS
