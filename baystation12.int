@@ -1,11 +1,6 @@
 // BEGIN_INTERNALS
 /*
-LAST_COMPILE_TIME: 1437628807
-DIR: code code\controllers code\defines code\defines\procs code\modules code\modules\admin code\modules\admin\permissionverbs code\modules\library icons icons\misc 
 AUTO_FILE_DIR: OFF
 MAP_ICON_TYPE: 0
-LAST_COMPILE_VERSION: 507.1286
-WINDOW: stddef.dm;code\modules\admin\permissionverbs\permissionedit.dm;code\modules\admin\admin_ranks.dm
-FILE: code\modules\admin\permissionverbs\permissionedit.dm
 */
 // END_INTERNALS
