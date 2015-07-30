@@ -1144,6 +1144,26 @@ var/global/floorIsLava = 0
 	if(istype(H))
 		H.regenerate_icons()
 
+/client/proc/admin_weaken(var/mob/living/carbon/human/M in mob_list)
+	set category = "Admin"
+	set name = "Weaken"
+	set desc = "Weakens player mob."
+
+	M.SetWeakened(300)
+	log_admin("[key_name(usr)] weakened [key_name(M)].")
+	message_admins("\blue [key_name_admin(usr)] weakened [key_name(M)].",1)
+	return
+
+/client/proc/admin_unweaken(var/mob/living/carbon/human/M in mob_list)
+	set category = "Admin"
+	set name = "Unweaken"
+	set desc = "Unweakens player mob. Can be used to remove non-admin-inflicted weaken."
+
+	M.SetWeakened(0)
+	log_admin("[key_name(usr)] unweakened [key_name(M)].")
+	message_admins("\blue [key_name_admin(usr)] unweakened [key_name(M)].",1)
+	return
+
 
 /*
 	helper proc to test if someone is a mentor or not.  Got tired of writing this same check all over the place.
