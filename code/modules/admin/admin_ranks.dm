@@ -98,7 +98,27 @@ var/list/admin_ranks = list()								//list of all ranks with associated rights
 			//find the client for a ckey if they are connected and associate them with the new admin datum
 			D.associate(directory[ckey])
 
-	else if (config.sqlite_enabled)
+	else
+		var/database/query/Query
+	/*	if(config.sqlite_enabled)
+			var/database/query/Query = ExecuteSQL("SELECT ckey, rank, level, flags FROM erro_admin")
+		else
+			var/DBQuery/Query = ExecuteSQL("SELECT ckey, rank, level, flags FROM erro_admin")*/
+		Query = ExecuteSQL("SELECT ckey, rank, level, flags FROM erro_admin")
+		if(Query)
+			while(Query.NextRow())
+				var/row = Query.GetRowData()
+				if(row["rank"] == "Removed") continue // De-adminned and are only there for archive purposes.
+				var/rights = row["flags"]
+				if(istext(rights)) rights = text2num(rights)
+				var/datum/admins/D = new /datum/admins(row["rank"], rights, row["ckey"])
+				D.associate(directory[row["ckey"]])
+		else
+			error("Something screwed up in load_admins with the SQL query.")
+			log_misc("Something screwed up in load_admins with the SQL query.")
+
+
+	/*if (config.sqlite_enabled)
 		// Use the SQLite db
 		if(!dbconlite)
 			log_misc("Failed to connect to SQLite in load_admins(). Reverting to legacy system.")
@@ -147,6 +167,7 @@ var/list/admin_ranks = list()								//list of all ranks with associated rights
 
 			//find the client for a ckey if they are connected and associate them with the new admin datum
 			D.associate(directory[ckey])
+		*/
 		if(!admin_datums)
 			error("The database query in load_admins() resulted in no admins being added to the list. Reverting to legacy system.")
 			log_misc("The database query in load_admins() resulted in no admins being added to the list. Reverting to legacy system.")
@@ -154,7 +175,8 @@ var/list/admin_ranks = list()								//list of all ranks with associated rights
 			load_admins()
 			return
 
-	#ifdef TESTING
+
+	//#ifdef TESTING
 	var/msg = "Admins Built:\n"
 	for(var/ckey in admin_datums)
 		var/rank
@@ -162,7 +184,7 @@ var/list/admin_ranks = list()								//list of all ranks with associated rights
 		if(D)	rank = D.rank
 		msg += "\t[ckey] - [rank]\n"
 	testing(msg)
-	#endif
+	//#endif
 
 
 #ifdef TESTING

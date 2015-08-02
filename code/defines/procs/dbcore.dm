@@ -38,6 +38,33 @@ var/DB_SERVER = "" // This is the location of your MySQL server (localhost is US
 var/DB_PORT = 3306 // This is the port your MySQL server is running on (3306 is the default)
 */
 
+proc/ExecuteSQL(SQLString)
+
+	if(config.sqlite_enabled) // Is SQLite enabled? Run a query on the SQLite db.
+
+		var/database/query/q = new(SQLString) //form the query
+
+		if(q.Execute(dbconlite)) // Did we execute the query?
+			return q // Return the results of the query so we can deal with it
+		else
+			return 0 // The query failed for some reason, let's return a fail.
+
+	else if(config.sql_enabled) // If SQLite isn't enabled, is normal SQL? Run a query on the MySQL db.
+
+		establish_db_connection() // Try to make sure MySQL is connected
+
+		if(!dbcon.IsConnected()) // Is MySQL actually connected? If not, log the error.
+			error("Failed to connect to MySQL Database")
+
+		var/DBQuery/query = dbcon.NewQuery(SQLString) // Form a new query
+		if(query.Execute()) // Did the query execute?
+			return query // Yes, Return the data.
+		else
+			return 0 // Well that went wrong, return a 0 so the local code can handle it.
+
+	else // Well this was just a disaster. Let them know
+		return 0
+
 DBConnection
 	var/_db_con // This variable contains a reference to the actual database connection.
 	var/dbi // This variable is a string containing the DBI MySQL requires.
